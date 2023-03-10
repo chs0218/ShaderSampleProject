@@ -1,0 +1,52 @@
+# Compiled object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled static libraries
+*.a
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Visual Studio files
+.vs/
+
+# CMake build directory
+build/
+
+# Xcode build directory
+*.xcodeproj/
+
+# Eclipse project files
+.project
+.cproject
+
+# Compiled shader files
+*.spv
+
+# macOS file attributes
+.DS_Store
+
+# Clang code analyzer files
+scan-build/
+
+# C++ libraries
+lib/
+
+# Visual Studio build log files
+*.tlog
+
+# Visual C++ intermediate debugger files
+*.idb
+
+# CMake recipe files
+*.recipe
