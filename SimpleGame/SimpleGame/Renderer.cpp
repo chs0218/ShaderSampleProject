@@ -191,9 +191,27 @@ void Renderer::Class0310_Rendering()
 	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Trans"), 0, 0, 0, 1);
 	glUniform4f(glGetUniformLocation(m_SolidRectShader, "u_Color"), 1, 1, 1, 1);
 
-	glEnableVertexAttribArray(0);
+	int attribLocation_Position = -1;
+	attribLocation_Position = glGetAttribLocation(m_SolidRectShader, "a_Position");		// a_Position이라는 사용자가 정의한 입력의 번호를 가져옴
+
+	glEnableVertexAttribArray(attribLocation_Position);
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);		// Draw시 데이터를 읽어갈 단위의 크기 및 시작점 설정
+	glVertexAttribPointer(attribLocation_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);		// Draw시 데이터를 읽어갈 단위의 크기 및 시작점 설정
+	
+	int attribLocation_Position1 = -1;
+	attribLocation_Position1 = glGetAttribLocation(m_SolidRectShader, "a_Position1");		// a_Position이라는 사용자가 정의한 입력의 번호를 가져옴
+
+	glEnableVertexAttribArray(attribLocation_Position1);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
+	glVertexAttribPointer(attribLocation_Position1, 3, GL_FLOAT, GL_FALSE, 0, 0);		// Draw시 데이터를 읽어갈 단위의 크기 및 시작점 설정
+	
+	
+	float fScale = abs(sinf(0.05f * fTimeElapsed));
+	int uniformScale = glGetUniformLocation(m_SolidRectShader, "u_Scale");			// uniform 변수 u_Scale의 번호를 가져온다.
+	glUniform1f(uniformScale, fScale);												// uniform 변수 u_Scale에 값을 세팅한다.
+
+	fTimeElapsed += 0.0166666666666667;
+
 	glDrawArrays(GL_TRIANGLES, 0, 3);		// 어떠한 Primitive로 구성하며 Vertex 몇개를 그릴 것인지 선택, 이 함수 호출 즉시 GPU가 동작함
 }
 
@@ -205,7 +223,8 @@ void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
 
 void Renderer::Class0310()
 {
-	float vertices[] = { 0, 0, 0, 1, 0, 0, 1, 1, 0, };
+	float vertices[] = { 0, 0, 0, 1, 0, 0, 1, 1, 0 };
+	float vertices1[] = { -1, -1, 0, 0, -1, 0, 0, 0, 0 };
 
 	glGenBuffers(1, &m_testVBO);		//Buffer Object를 생성하고 Object ID를 testVBO에 저장, testVBO는 CPU->GPU로 올릴 때 사용 
 	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO);		// 생성된 Buffer Object의 형태와 용도를 구체화 해주는 Bind라는 작업을 수행
@@ -213,7 +232,11 @@ void Renderer::Class0310()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);		// Bind된 Buffer Object에 데이터를 할당
 																					// GL_STATIC_DRAW는 버텍스 버퍼가 생성되고 변경되지 않는 경우에 사용
 																					// 하드웨어에서 효율적으로 데이터를 처리할 수 있음
-	/*int size = 400000000000000;
+	glGenBuffers(1, &m_testVBO1);
+	glBindBuffer(GL_ARRAY_BUFFER, m_testVBO1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices1), vertices1, GL_STATIC_DRAW);
+																					
+																					/*int size = 400000000000000;
 	float* testTemp = new float[size];
 	memset(testTemp, 1, sizeof(float) * size);
 
