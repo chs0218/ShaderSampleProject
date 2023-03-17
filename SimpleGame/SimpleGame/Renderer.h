@@ -16,6 +16,8 @@ public:
 	bool IsInitialized();
 	void DrawSolidRect(float x, float y, float z, float size, float r, float g, float b, float a);
 	void Class0310_Rendering();
+	void DrawParticle();
+
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	bool ReadFile(char* filename, std::string *target);
@@ -24,6 +26,12 @@ private:
 	void CreateVertexBufferObjects();
 	void GetGLPosition(float x, float y, float *newX, float *newY);
 	void Class0310();
+
+	// Particle
+	void CreateParticleVBO();
+	GLuint m_ParticleShader = 0;
+	GLuint m_ParticleVBO = 0;
+	GLuint m_ParticleVertexCount = 0;
 
 	bool m_Initialized = false;
 	
@@ -35,6 +43,7 @@ private:
 
 	GLuint m_testVBO = 0;
 	GLuint m_testVBO1 = 0;
+	GLuint m_ColorVBO = 0;
 
 	float fTimeElapsed = 0.0f;
 };
