@@ -28,9 +28,10 @@ private:
 	void Class0310();
 
 	// Particle
-	void CreateParticleVBO();
+	void CreateParticleVBO(int numParticleCount);
 	GLuint m_ParticleShader = 0;
 	GLuint m_ParticleVBO = 0;
+	GLuint m_ParticleVelVBO = 0;
 	GLuint m_ParticleVertexCount = 0;
 
 	bool m_Initialized = false;
