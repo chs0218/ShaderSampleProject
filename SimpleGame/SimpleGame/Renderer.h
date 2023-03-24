@@ -32,6 +32,8 @@ private:
 	GLuint m_ParticleShader = 0;
 	GLuint m_ParticleVBO = 0;
 	GLuint m_ParticleVelVBO = 0;
+	GLuint m_ParticleEmitTimeVBO = 0;
+	GLuint m_ParticleLifeTimeVBO = 0;
 	GLuint m_ParticleVertexCount = 0;
 
 	bool m_Initialized = false;
