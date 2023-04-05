@@ -34,6 +34,9 @@ private:
 	GLuint m_ParticleVelVBO = 0;
 	GLuint m_ParticleEmitTimeVBO = 0;
 	GLuint m_ParticleLifeTimeVBO = 0;
+	GLuint m_ParticleAmpVBO = 0;
+	GLuint m_ParticlePeriodVBO = 0;
+	GLuint m_ParticleCircleVBO = 0;
 	GLuint m_ParticleVertexCount = 0;
 
 	bool m_Initialized = false;

@@ -242,6 +242,21 @@ void Renderer::DrawParticle()
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleLifeTimeVBO);
 	glVertexAttribPointer(lifeTimeLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
 
+	int ampLoc = glGetAttribLocation(program, "a_Amp");
+	glEnableVertexAttribArray(ampLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleAmpVBO);
+	glVertexAttribPointer(ampLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
+	int periodLoc = glGetAttribLocation(program, "a_Period");
+	glEnableVertexAttribArray(periodLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePeriodVBO);
+	glVertexAttribPointer(periodLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
+	int circleLoc = glGetAttribLocation(program, "a_Circle");
+	glEnableVertexAttribArray(circleLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleCircleVBO);
+	glVertexAttribPointer(circleLoc, 1, GL_FLOAT, GL_FALSE, 0, 0);
+
 	float f3Transform = fTimeElapsed;
 	int timeLoc = glGetUniformLocation(m_ParticleShader, "u_Time");			
 	glUniform1f(timeLoc, f3Transform);
@@ -249,7 +264,7 @@ void Renderer::DrawParticle()
 	int accelLoc = glGetUniformLocation(m_ParticleShader, "u_Accel");
 	glUniform3f(accelLoc, 0.f, -2.8f, 0.f);
 
-	fTimeElapsed += 0.003;
+	fTimeElapsed += 0.0005;
 
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVertexCount);
 }
@@ -301,6 +316,9 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 	std::vector<std::array<float, 3>> vel_Vertices;
 	std::vector<float> emit_Time;
 	std::vector<float> life_Time;
+	std::vector<float> v_Amp;
+	std::vector<float> period;
+	std::vector<float> v_Circle;
 	
 	float particleSize = 0.01f;
 
@@ -332,7 +350,7 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{
-		float randTime = ((float)rand() / (float)RAND_MAX) * 10.0f;
+		float randTime = ((float)rand() / (float)RAND_MAX) * 1.0f;
 
 		emit_Time.emplace_back(randTime);
 		emit_Time.emplace_back(randTime);
@@ -344,7 +362,7 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{
-		float randTime = ((float)rand() / (float)RAND_MAX) * 1.0f;
+		float randTime = ((float)rand() / (float)RAND_MAX) * 2.0f;
 
 		life_Time.emplace_back(randTime);
 		life_Time.emplace_back(randTime);
@@ -352,6 +370,42 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 		life_Time.emplace_back(randTime);
 		life_Time.emplace_back(randTime);
 		life_Time.emplace_back(randTime);
+	}
+
+	for (int i = 0; i < numParticleCount; ++i)
+	{
+		float fRandomAmp = (((float)rand() / (float)RAND_MAX) - 0.5f) * 2.f * 1.f;
+
+		v_Amp.emplace_back(fRandomAmp);
+		v_Amp.emplace_back(fRandomAmp);
+		v_Amp.emplace_back(fRandomAmp);
+		v_Amp.emplace_back(fRandomAmp);
+		v_Amp.emplace_back(fRandomAmp);
+		v_Amp.emplace_back(fRandomAmp);
+	}
+
+	for (int i = 0; i < numParticleCount; ++i)
+	{
+		float fRandomPeriod = ((float)rand() / (float)RAND_MAX) * 1.85f + 0.15f;
+
+		period.emplace_back(fRandomPeriod);
+		period.emplace_back(fRandomPeriod);
+		period.emplace_back(fRandomPeriod);
+		period.emplace_back(fRandomPeriod);
+		period.emplace_back(fRandomPeriod);
+		period.emplace_back(fRandomPeriod);
+	}
+
+	for (int i = 0; i < numParticleCount; ++i)
+	{
+		float fRandomCircle = (((float)rand() / (float)RAND_MAX) - 0.5f) * 2.0f;
+
+		v_Circle.emplace_back(fRandomCircle);
+		v_Circle.emplace_back(fRandomCircle);
+		v_Circle.emplace_back(fRandomCircle);
+		v_Circle.emplace_back(fRandomCircle);
+		v_Circle.emplace_back(fRandomCircle);
+		v_Circle.emplace_back(fRandomCircle);
 	}
 
 	glGenBuffers(1, &m_ParticleVBO);
@@ -369,4 +423,16 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 	glGenBuffers(1, &m_ParticleLifeTimeVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleLifeTimeVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * life_Time.size(), life_Time.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_ParticleAmpVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleAmpVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * v_Amp.size(), v_Amp.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_ParticlePeriodVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePeriodVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * period.size(), period.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_ParticleCircleVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleCircleVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float)* v_Circle.size(), v_Circle.data(), GL_STATIC_DRAW);
 }
