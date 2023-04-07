@@ -230,14 +230,23 @@ void Renderer::DrawParticle()
 	GLuint program = m_ParticleShader;
 	glUseProgram(program);
 
-	SetVBO(m_ParticleVBO, glGetAttribLocation(program, "a_Position"), 3);
+	int PosLoc = glGetAttribLocation(program, "a_Position");
+	glEnableVertexAttribArray(PosLoc);
+	int ColorLoc = glGetAttribLocation(program, "a_Color");
+	glEnableVertexAttribArray(ColorLoc);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePosColVBO);
+	glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePosColVBO);
+	glVertexAttribPointer(ColorLoc, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (GLvoid*)(sizeof(float) * 3));
+
 	SetVBO(m_ParticleVelVBO, glGetAttribLocation(program, "a_Vel"), 3);
 	SetVBO(m_ParticleEmitTimeVBO, glGetAttribLocation(program, "a_EmitTime"), 1);
 	SetVBO(m_ParticleLifeTimeVBO, glGetAttribLocation(program, "a_LifeTime"), 1);
 	SetVBO(m_ParticlePeriodVBO, glGetAttribLocation(program, "a_Period"), 1);
 	SetVBO(m_ParticleAmpVBO, glGetAttribLocation(program, "a_Amp"), 1);
 	SetVBO(m_ParticleValueVBO, glGetAttribLocation(program, "a_Value"), 1);
-	SetVBO(m_ParticleColorVBO, glGetAttribLocation(program, "a_Color"), 4);
 
 	int timeLoc = glGetUniformLocation(program, "u_Time");
 	glUniform1f(timeLoc, g_time);
@@ -311,6 +320,8 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 	std::vector<float> v_Amp;
 	std::vector<float> v_Period;
 	std::vector<float> v_Values;
+
+	std::vector<float> v_PosCol;
 
 	float particleSize = 0.01f;
 
@@ -416,6 +427,71 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 		v_Colors.emplace_back(std::array<float, 4>{fRandomR, fRandomG, fRandomB, fRandomA});
 	}
 
+	for (int i = 0; i < numParticleCount; ++i)
+	{
+		float particleCenterX = 0.f/*2.0f * (((float)rand() / (float) RAND_MAX) - 0.5f)*/;
+		float particleCenterY = 0.f/*2.0f * (((float)rand() / (float)RAND_MAX) - 0.5f)*/;
+
+		float fRandomR = 1.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomG = 1.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomB = 1.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomA = 1.f * (((float)rand() / (float)RAND_MAX));
+
+		v_PosCol.emplace_back(particleCenterX - particleSize);
+		v_PosCol.emplace_back(particleCenterY + particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+
+		v_PosCol.emplace_back(particleCenterX - particleSize);
+		v_PosCol.emplace_back(particleCenterY - particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+
+		v_PosCol.emplace_back(particleCenterX + particleSize);
+		v_PosCol.emplace_back(particleCenterY + particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+
+		v_PosCol.emplace_back(particleCenterX - particleSize);
+		v_PosCol.emplace_back(particleCenterY - particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+
+		v_PosCol.emplace_back(particleCenterX + particleSize);
+		v_PosCol.emplace_back(particleCenterY - particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+
+		v_PosCol.emplace_back(particleCenterX + particleSize);
+		v_PosCol.emplace_back(particleCenterY + particleSize);
+		v_PosCol.emplace_back(0.0f);
+
+		v_PosCol.emplace_back(fRandomR);
+		v_PosCol.emplace_back(fRandomG);
+		v_PosCol.emplace_back(fRandomB);
+		v_PosCol.emplace_back(fRandomA);
+	}
+
 	glGenBuffers(1, &m_ParticleVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * v_Vertices.size(), v_Vertices.data(), GL_STATIC_DRAW);
@@ -447,4 +523,8 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 	glGenBuffers(1, &m_ParticleColorVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleColorVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * v_Colors.size(), v_Colors.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &m_ParticlePosColVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePosColVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * v_PosCol.size(), v_PosCol.data(), GL_STATIC_DRAW);
 }
