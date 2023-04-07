@@ -20,6 +20,7 @@ public:
 
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
+	void SetVBO(GLuint nVBO, int vboLoc, int nFloatnum);
 	bool ReadFile(char* filename, std::string *target);
 	void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType);
 	GLuint CompileShaders(char* filenameVS, char* filenameFS);

@@ -218,61 +218,30 @@ void Renderer::Class0310_Rendering()
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
+void Renderer::SetVBO(GLuint nVBO, int vboLoc, int nFloatnum)
+{
+	glEnableVertexAttribArray(vboLoc);
+	glBindBuffer(GL_ARRAY_BUFFER, nVBO);
+	glVertexAttribPointer(vboLoc, nFloatnum, GL_FLOAT, GL_FALSE, 0, 0);
+}
+
 void Renderer::DrawParticle()
 {
 	GLuint program = m_ParticleShader;
 	glUseProgram(program);
 
-	int posLoc = glGetAttribLocation(program, "a_Position");
-	glEnableVertexAttribArray(posLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVBO);
-	glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE,
-							0, 0);
-
-	int velLoc = glGetAttribLocation(program, "a_Vel");
-	glEnableVertexAttribArray(velLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleVelVBO);
-	glVertexAttribPointer(velLoc, 3, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int emitTimeLoc = glGetAttribLocation(program, "a_EmitTime");
-	glEnableVertexAttribArray(emitTimeLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleEmitTimeVBO);
-	glVertexAttribPointer(emitTimeLoc, 1, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int lifeTimeLoc = glGetAttribLocation(program, "a_LifeTime");
-	glEnableVertexAttribArray(lifeTimeLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleLifeTimeVBO);
-	glVertexAttribPointer(lifeTimeLoc, 1, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int periodLoc = glGetAttribLocation(program, "a_Period");
-	glEnableVertexAttribArray(periodLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePeriodVBO);
-	glVertexAttribPointer(periodLoc, 1, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int ampLoc = glGetAttribLocation(program, "a_Amp");
-	glEnableVertexAttribArray(ampLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleAmpVBO);
-	glVertexAttribPointer(ampLoc, 1, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int valueLoc = glGetAttribLocation(program, "a_Value");
-	glEnableVertexAttribArray(valueLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleValueVBO);
-	glVertexAttribPointer(valueLoc, 1, GL_FLOAT, GL_FALSE,
-		0, 0);
-
-	int colorLoc = glGetAttribLocation(program, "a_Color");
-	glEnableVertexAttribArray(colorLoc);
-	glBindBuffer(GL_ARRAY_BUFFER, m_ParticleColorVBO);
-	glVertexAttribPointer(colorLoc, 4, GL_FLOAT, GL_FALSE,
-		0, 0);
+	SetVBO(m_ParticleVBO, glGetAttribLocation(program, "a_Position"), 3);
+	SetVBO(m_ParticleVelVBO, glGetAttribLocation(program, "a_Vel"), 3);
+	SetVBO(m_ParticleEmitTimeVBO, glGetAttribLocation(program, "a_EmitTime"), 1);
+	SetVBO(m_ParticleLifeTimeVBO, glGetAttribLocation(program, "a_LifeTime"), 1);
+	SetVBO(m_ParticlePeriodVBO, glGetAttribLocation(program, "a_Period"), 1);
+	SetVBO(m_ParticleAmpVBO, glGetAttribLocation(program, "a_Amp"), 1);
+	SetVBO(m_ParticleValueVBO, glGetAttribLocation(program, "a_Value"), 1);
+	SetVBO(m_ParticleColorVBO, glGetAttribLocation(program, "a_Color"), 4);
 
 	int timeLoc = glGetUniformLocation(program, "u_Time");
 	glUniform1f(timeLoc, g_time);
+
 	int accelLoc = glGetUniformLocation(program, "u_Accel");
 	glUniform3f(accelLoc, 0.f, -2.8f, 0.f);
 
