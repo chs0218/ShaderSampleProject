@@ -35,6 +35,7 @@ private:
 	GLuint m_ParticlePeriodVBO = -1;
 	GLuint m_ParticleAmpVBO = -1;
 	GLuint m_ParticleValueVBO = -1;
+	GLuint m_ParticleColorVBO = -1;
 	GLuint m_ParticleVertexCount = -1;
 
 	bool m_Initialized = false;
