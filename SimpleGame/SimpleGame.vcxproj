@@ -172,6 +172,8 @@
   <ItemGroup>
     <None Include="Shaders\Particle.fs" />
     <None Include="Shaders\Particle.vs" />
+    <None Include="Shaders\SandBox.fs" />
+    <None Include="Shaders\SandBox.vs" />
     <None Include="Shaders\SolidRect.fs" />
     <None Include="Shaders\SolidRect.vs" />
   </ItemGroup>

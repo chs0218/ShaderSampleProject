@@ -7,6 +7,10 @@
 
 #include "Dependencies\glew.h"
 
+struct PosCol {
+	std::vector<std::array<float, 3>> m_vVertices;
+};
+
 class Renderer
 {
 public:
@@ -17,7 +21,7 @@ public:
 	void DrawSolidRect(float x, float y, float z, float size, float r, float g, float b, float a);
 	void Class0310_Rendering();
 	void DrawParticle();
-
+	void DrawSandBox();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	void SetVBO(GLuint nVBO, int vboLoc, int nFloatnum);
@@ -28,6 +32,8 @@ private:
 	void GetGLPosition(float x, float y, float *newX, float *newY);
 	void Class0310();
 	void CreateParticleVBO(int numParticleCount);
+	void CreateSandBoxVBO();
+
 	GLuint m_ParticleShader = -1;
 	GLuint m_ParticleVBO = -1;
 	GLuint m_ParticleVelVBO = -1;
@@ -39,6 +45,11 @@ private:
 	GLuint m_ParticleColorVBO = -1;
 	GLuint m_ParticlePosColVBO = -1;
 	GLuint m_ParticleVertexCount = -1;
+
+
+	//for fragment sandbox
+	GLuint m_FragmentSandboxShader = 0;
+	GLuint m_FragmentSandboxVBO = 0;
 
 	bool m_Initialized = false;
 	

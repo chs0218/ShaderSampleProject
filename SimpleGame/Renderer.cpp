@@ -21,10 +21,12 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	//Load shaders
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");
+	m_FragmentSandboxShader = CompileShaders("./Shaders/SandBox.vs", "./Shaders/SandBox.fs");
 	
 	//Create VBOs
 	CreateVertexBufferObjects();
 	CreateParticleVBO(10000);
+	CreateSandBoxVBO();
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -230,6 +232,9 @@ void Renderer::DrawParticle()
 	GLuint program = m_ParticleShader;
 	glUseProgram(program);
 
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	int PosLoc = glGetAttribLocation(program, "a_Position");
 	glEnableVertexAttribArray(PosLoc);
 	int ColorLoc = glGetAttribLocation(program, "a_Color");
@@ -257,6 +262,32 @@ void Renderer::DrawParticle()
 	g_time += 0.01;
 
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVertexCount);
+
+	glDisable(GL_BLEND);
+}
+
+void Renderer::DrawSandBox()
+{
+	GLuint program = m_FragmentSandboxShader;
+	glUseProgram(program);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	int PosLoc = glGetAttribLocation(program, "a_Position");
+	glEnableVertexAttribArray(PosLoc);
+	int TexLoc = glGetAttribLocation(program, "a_Texcoord");
+	glEnableVertexAttribArray(TexLoc);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glVertexAttribPointer(TexLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisable(GL_BLEND);
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
@@ -527,4 +558,21 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 	glGenBuffers(1, &m_ParticlePosColVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_ParticlePosColVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * v_PosCol.size(), v_PosCol.data(), GL_STATIC_DRAW);
+}
+
+void Renderer::CreateSandBoxVBO()
+{
+	std::vector<std::array<float, 5>> v_PosTex;
+
+	v_PosTex.emplace_back(std::array<float, 5>{-1.f, -1.f, 0.f, 0.f, 1.f});
+	v_PosTex.emplace_back(std::array<float, 5>{-1.f, 1.f, 0.f, 0.f, 0.f});
+	v_PosTex.emplace_back(std::array<float, 5>{1.f, 1.f, 0.f, 1.f, 0.f});
+
+	v_PosTex.emplace_back(std::array<float, 5>{-1.f, -1.f, 0.f, 0.f, 1.f});
+	v_PosTex.emplace_back(std::array<float, 5>{ 1.f, 1.f, 0.f, 1.f, 0.f});
+	v_PosTex.emplace_back(std::array<float, 5>{1.f, -1.f, 0.f, 1.f, 1.f});
+
+	glGenBuffers(1, &m_FragmentSandboxVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 5 * v_PosTex.size(), v_PosTex.data(), GL_STATIC_DRAW);
 }

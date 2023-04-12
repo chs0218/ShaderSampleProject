@@ -10,6 +10,7 @@ in float a_Amp;
 in float a_Value;
 
 out vec4 v_Color;
+out vec2 v_Texcoord;
 
 uniform float u_Time;
 uniform vec3 u_Accel;
@@ -24,7 +25,8 @@ vec4 GraphSin()
 {
 	vec4 newPos = vec4(0, 0, 0, 1);
 	float t = u_Time - a_EmitTime;
-	
+	float alpha = 1.0f;
+
 	if(t < 0.0)
 	{
 	}
@@ -43,7 +45,11 @@ vec4 GraphSin()
 					nVel*
 					newT*a_Amp*
 					sin((1.0+newT)*a_Period*newT*2.0*c_PI);
+
+		 alpha = a_Color.a * (1.0f - newT /a_LifeTime);
+		 alpha = pow(alpha, 0.5);
 	}
+	v_Color = vec4(a_Color.rgb, a_Color.a * alpha);
 	return newPos;
 }
 
@@ -51,6 +57,7 @@ vec4 P1()
 {
 	vec4 newPosition = vec4(0, 0, 0, 1);
 	float t = u_Time - a_EmitTime;
+	float alpha = 1.0f;
 
 	if(t < 0.0)
 	{
@@ -61,14 +68,16 @@ vec4 P1()
 		newPosition.xyz = a_Position 
 						+ a_Vel * newT
 						+ 0.5 * u_Accel * newT * newT;
+
+		alpha = a_Color.a * (1.0f - newT /a_LifeTime);
+		alpha = pow(alpha, 0.5);
 	}
+	v_Color = vec4(a_Color.rgb, a_Color.a * alpha);
 	return newPosition;
 }
 
 void main()
 {
 	gl_Position = GraphSin();
-	v_Color = a_Color;
 	//gl_Position = P1();
-
 }
