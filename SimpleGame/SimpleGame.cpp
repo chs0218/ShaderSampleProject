@@ -15,6 +15,9 @@ but WITHOUT ANY WARRANTY.
 
 #include "Renderer.h"
 
+#define FRAME_BUFFER_WIDTH 1000
+#define FRAME_BUFFER_HEIGHT 1000
+
 Renderer *g_Renderer = NULL;
 
 void RenderScene(void)
@@ -56,7 +59,7 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(0, 0);
-	glutInitWindowSize(500, 500);
+	glutInitWindowSize(FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	glutCreateWindow("Game Software Engineering KPU");
 
 	glewInit();
@@ -70,7 +73,7 @@ int main(int argc, char **argv)
 	}
 
 	// Initialize Renderer
-	g_Renderer = new Renderer(500, 500);
+	g_Renderer = new Renderer(FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 	if (!g_Renderer->IsInitialized())
 	{
 		std::cout << "Renderer could not be initialized.. \n";

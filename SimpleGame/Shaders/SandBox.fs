@@ -2,16 +2,22 @@
 
 layout(location=0) out vec4 FragColor;
 
-varying vec2 v_Texcoord;
+in vec2 v_UV;
+
+uniform vec2 u_Point;
+uniform vec2 u_Points[3];
+uniform float u_Time;
+
+const float c_PI = 3.141592;
 
 void circle()
 {
-    vec2 newValue = v_Texcoord - vec2(0.5f, 0.5f);
+    vec2 newValue = v_UV - u_Points[1];
     float d = length(newValue);
 
-    if(d < 0.5f)
+    if(d < 0.1f)
     {
-		FragColor = vec4(v_Texcoord, 0.0f, 1.0f);
+		FragColor = vec4(v_UV, 0.0f, 1.0f);
     }
 	else
 	{
@@ -19,15 +25,35 @@ void circle()
 	}
 }
 
-
 void circles()
 {
-    vec2 newValue = v_Texcoord - vec2(0.5f, 0.5f);
+    vec2 newValue = v_UV - u_Point;
     float d = length(newValue);
     FragColor = vec4(sin(30 * d));
 }
 
+void radar()
+{
+    vec2 newValue = v_UV - vec2(0.5, 0.5);
+    float d = length(newValue);
+    float value = sin((2 * c_PI * d) -  13 * u_Time) - 0.9;
+    float ring_mask = ceil(value);
+
+    float obj_mask = 0.0;
+    for(int i=0; i<3; ++i)
+    {    
+        vec2 temp = v_UV - u_Points[i];
+        float d = length(temp);
+        if(d < 0.1)
+        {
+            obj_mask += 1.0;
+        }
+    }
+
+    FragColor = vec4(10.0f * value + ring_mask*obj_mask);
+}
+
 void main()
 {
-    circles();
+    radar();
 }

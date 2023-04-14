@@ -3,6 +3,7 @@
 in vec3 a_Position;
 in vec3 a_Vel;
 in vec4 a_Color;
+in vec2 a_UV;
 in float a_EmitTime;
 in float a_LifeTime;
 in float a_Period;
@@ -10,7 +11,7 @@ in float a_Amp;
 in float a_Value;
 
 out vec4 v_Color;
-out vec2 v_Texcoord;
+out vec2 v_UV;
 
 uniform float u_Time;
 uniform vec3 u_Accel;
@@ -80,4 +81,5 @@ void main()
 {
 	gl_Position = GraphSin();
 	//gl_Position = P1();
+    v_UV = a_UV;
 }
