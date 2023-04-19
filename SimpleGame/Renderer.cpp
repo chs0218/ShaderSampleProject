@@ -22,11 +22,14 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_SolidRectShader = CompileShaders("./Shaders/SolidRect.vs", "./Shaders/SolidRect.fs");
 	m_ParticleShader = CompileShaders("./Shaders/Particle.vs", "./Shaders/Particle.fs");
 	m_FragmentSandboxShader = CompileShaders("./Shaders/SandBox.vs", "./Shaders/SandBox.fs");
+    m_AlphaClearShader = CompileShaders("./Shaders/AlphaClear.vs", "./Shaders/AlphaClear.fs");
+    m_VertexSandBoxShader = CompileShaders("./Shaders/VertexSandbox.vs", "./Shaders/VertexSandbox.fs");
 	
 	//Create VBOs
 	CreateVertexBufferObjects();
 	CreateParticleVBO(10000);
 	CreateSandBoxVBO();
+    CreateHorizontalVBO(50);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -298,7 +301,7 @@ void Renderer::DrawSandBox()
     glUniform2f(pointULoc, 0.3f, 0.3f);
 
     int pointsULoc = glGetUniformLocation(program, "u_Points");
-    std::vector<float> points = {0.1f, 0.1f, 0.5f, 0.5f, 0.8f, 0.8f};
+    std::vector<float> points = {0.1f, 0.1f, 0.5f, 0.5f, 0.9f, 0.9f};
     glUniform2fv(pointsULoc, points.size(), points.data());
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -370,7 +373,7 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	std::vector<float> v_PosCol;
 
-	float particleSize = 0.1f;
+	float particleSize = 0.01f;
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{
@@ -609,4 +612,76 @@ void Renderer::CreateSandBoxVBO()
 	glGenBuffers(1, &m_FragmentSandboxVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, m_FragmentSandboxVBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 5 * v_PosTex.size(), v_PosTex.data(), GL_STATIC_DRAW);
+
+    std::vector<std::array<float, 3>> v_PosTex2;
+    
+    v_PosTex2.emplace_back(std::array<float, 3>{-1.f, -1.f, 0.f});
+    v_PosTex2.emplace_back(std::array<float, 3>{-1.f, 1.f, 0.f});
+    v_PosTex2.emplace_back(std::array<float, 3>{1.f, 1.f, 0.f});
+
+    v_PosTex2.emplace_back(std::array<float, 3>{-1.f, -1.f, 0.f});
+    v_PosTex2.emplace_back(std::array<float, 3>{ 1.f, 1.f, 0.f});
+    v_PosTex2.emplace_back(std::array<float, 3>{1.f, -1.f, 0.f});
+
+    glGenBuffers(1, &m_AlphaClearVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_AlphaClearVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * v_PosTex2.size(), v_PosTex2.data(), GL_STATIC_DRAW);
+}
+
+void Renderer::CreateHorizontalVBO(int iHorizontalVertexCount)
+{
+    m_HorizontalLineVertexCount = iHorizontalVertexCount;
+    std::vector<float> verticesLine;
+    float gap = 2.f / ((float)m_HorizontalLineVertexCount);
+
+    for (int i = 0; i < m_HorizontalLineVertexCount; ++i)
+    {
+        verticesLine.emplace_back((float)i * gap - 1.0f);
+        verticesLine.emplace_back(0.f);
+        verticesLine.emplace_back(0.f);
+    }
+
+    glGenBuffers(1, &m_HorizontalLineVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_HorizontalLineVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verticesLine.size(), verticesLine.data(), GL_STATIC_DRAW);
+}
+
+void Renderer::DrawAlphaClear()
+{
+    GLuint program = m_AlphaClearShader;
+    glUseProgram(program);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int PosLoc = glGetAttribLocation(program, "a_Position");
+    glEnableVertexAttribArray(PosLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_AlphaClearVBO);
+    glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glDisable(GL_BLEND);
+}
+
+void Renderer::DrawHorizontalLine()
+{
+    GLuint program = m_VertexSandBoxShader;
+    glUseProgram(program);
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int PosLoc = glGetAttribLocation(program, "a_Position");
+    glEnableVertexAttribArray(PosLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_HorizontalLineVBO);
+    glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    int timeLoc = glGetUniformLocation(program, "u_Time");
+    glUniform1f(timeLoc, g_time);
+
+    g_time += 0.1f;
+
+    glDrawArrays(GL_LINE_STRIP, 0, m_HorizontalLineVertexCount);
 }

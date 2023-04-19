@@ -34,9 +34,9 @@ void circles()
 
 void radar()
 {
-    vec2 newValue = v_UV - vec2(0.5, 0.5);
+    vec2 newValue = v_UV - vec2(0.5f, 0.5f);
     float d = length(newValue);
-    float value = sin((2 * c_PI * d) -  13 * u_Time) - 0.9;
+    float value = sin((2.f * c_PI * d) -  13.f * u_Time) - 0.9f;
     float ring_mask = ceil(value);
 
     float obj_mask = 0.0;
@@ -44,9 +44,9 @@ void radar()
     {    
         vec2 temp = v_UV - u_Points[i];
         float d = length(temp);
-        if(d < 0.1)
+        if(d < 0.07)
         {
-            obj_mask += 1.0;
+            obj_mask += 1.0f;
         }
     }
 

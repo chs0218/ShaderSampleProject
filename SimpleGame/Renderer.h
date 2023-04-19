@@ -22,6 +22,8 @@ public:
 	void Class0310_Rendering();
 	void DrawParticle();
 	void DrawSandBox();
+    void DrawAlphaClear();
+    void DrawHorizontalLine();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	void SetVBO(GLuint nVBO, int vboLoc, int nFloatnum);
@@ -33,6 +35,7 @@ private:
 	void Class0310();
 	void CreateParticleVBO(int numParticleCount);
 	void CreateSandBoxVBO();
+    void CreateHorizontalVBO(int iHorizontalVertexCount);
 
 	GLuint m_ParticleShader = -1;
 	GLuint m_ParticleVBO = -1;
@@ -50,6 +53,15 @@ private:
 	//for fragment sandbox
 	GLuint m_FragmentSandboxShader = 0;
 	GLuint m_FragmentSandboxVBO = 0;
+
+    //for trail
+    GLuint m_AlphaClearShader = 0;
+    GLuint m_AlphaClearVBO = 0;
+
+    //for vertex anim
+    GLuint m_VertexSandBoxShader = 0;
+    GLuint m_HorizontalLineVBO = 0;
+    GLuint m_HorizontalLineVertexCount = 0;
 
 	bool m_Initialized = false;
 	
