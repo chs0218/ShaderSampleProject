@@ -670,6 +670,7 @@ void Renderer::DrawHorizontalLine()
     GLuint program = m_VertexSandBoxShader;
     glUseProgram(program);
 
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     int PosLoc = glGetAttribLocation(program, "a_Position");
@@ -681,7 +682,13 @@ void Renderer::DrawHorizontalLine()
     int timeLoc = glGetUniformLocation(program, "u_Time");
     glUniform1f(timeLoc, g_time);
 
-    g_time += 0.1f;
+    g_time += 0.016f;
 
-    glDrawArrays(GL_LINE_STRIP, 0, m_HorizontalLineVertexCount);
+    for (int i = 0; i < 10; i++)
+    {
+        glUniform1f(timeLoc, g_time + (float)i * 0.2f);
+        glDrawArrays(GL_LINE_STRIP, 0, m_HorizontalLineVertexCount);
+    }
+
+    glDisable(GL_BLEND);
 }
