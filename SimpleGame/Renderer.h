@@ -24,6 +24,7 @@ public:
 	void DrawSandBox();
     void DrawAlphaClear();
     void DrawHorizontalLine();
+    void DrawTextureSandBox();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	void SetVBO(GLuint nVBO, int vboLoc, int nFloatnum);
@@ -36,6 +37,8 @@ private:
 	void CreateParticleVBO(int numParticleCount);
 	void CreateSandBoxVBO();
     void CreateHorizontalVBO(int iHorizontalVertexCount);
+    void CreateTextures();
+    GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
 
 	GLuint m_ParticleShader = -1;
 	GLuint m_ParticleVBO = -1;
@@ -62,6 +65,11 @@ private:
     GLuint m_VertexSandBoxShader = 0;
     GLuint m_HorizontalLineVBO = 0;
     GLuint m_HorizontalLineVertexCount = 0;
+
+    GLuint m_TextureSandboxShader = 0;
+    GLuint m_TextureSandboxVBO = 0;
+    GLuint m_CheckerBoardTexture = 0;
+    GLuint m_RGBTexture = 0;
 
 	bool m_Initialized = false;
 	

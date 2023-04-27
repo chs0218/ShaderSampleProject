@@ -68,18 +68,18 @@ void sinGraph()
 {
     FragColor = vec4(0);
 
-    for(int i=0; i<10; ++i)
+    for(int i=0; i<5; ++i)
     {
         vec2 newUV = vec2(v_UV.x, (v_UV.y - 0.5f) * 2.f);
 
         float newTime = u_Time + 0.2f * i;
         float newInput = v_UV.x * 2.f * c_PI + c_PI;   // 0 ~ 2 * PI
-        float sinValue = newUV.x * sin(newInput + newTime * 5);
+        float sinValue = 0.5f * newUV.x * sin(newInput - newTime * 5);
         float width = 0.005f;
         float newAlpha = 1.f - newUV.x;
         float newLines = sin(newUV.x * 200.0f - newTime * 5); 
 
-        if(newUV.y > sinValue&& newUV.y < sinValue + width)
+        if(newUV.y > sinValue && newUV.y < sinValue + width)
             FragColor += vec4(1.f * newAlpha * newLines);
     }
 }

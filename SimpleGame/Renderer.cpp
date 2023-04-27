@@ -1,5 +1,7 @@
 #include "stdafx.h"
 #include "Renderer.h"
+#include "LoadPng.h"
+#include <assert.h>
 
 Renderer::Renderer(int windowSizeX, int windowSizeY)
 {
@@ -24,12 +26,19 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	m_FragmentSandboxShader = CompileShaders("./Shaders/SandBox.vs", "./Shaders/SandBox.fs");
     m_AlphaClearShader = CompileShaders("./Shaders/AlphaClear.vs", "./Shaders/AlphaClear.fs");
     m_VertexSandBoxShader = CompileShaders("./Shaders/VertexSandbox.vs", "./Shaders/VertexSandbox.fs");
+    m_TextureSandboxShader = CompileShaders("./Shaders/TextureSandBox.vs", "./Shaders/TextureSandBox.fs");
 	
 	//Create VBOs
 	CreateVertexBufferObjects();
 	CreateParticleVBO(10000);
 	CreateSandBoxVBO();
     CreateHorizontalVBO(50);
+
+    //Create Textures
+    CreateTextures();
+
+    //Load Textures
+    m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -44,6 +53,20 @@ bool Renderer::IsInitialized()
 
 void Renderer::CreateVertexBufferObjects()
 {
+    std::vector<std::array<float, 5>> v_PosTex;
+
+    v_PosTex.emplace_back(std::array<float, 5>{-0.5f, 0.5f, 0.f, 0.f, 0.f});
+    v_PosTex.emplace_back(std::array<float, 5>{-0.5f, -0.5f, 0.f, 0.f, 1.f});
+    v_PosTex.emplace_back(std::array<float, 5>{0.5f, 0.5f, 0.f, 1.f, 0.f});
+
+    v_PosTex.emplace_back(std::array<float, 5>{0.5f, 0.5f, 0.f, 1.f, 0.f});
+    v_PosTex.emplace_back(std::array<float, 5>{ -0.5f, -0.5f, 0.f, 0.f, 1.f});
+    v_PosTex.emplace_back(std::array<float, 5>{0.5f, -0.5f, 0.f, 1.f, 1.f});
+
+    glGenBuffers(1, &m_TextureSandboxVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 5 * v_PosTex.size(), v_PosTex.data(), GL_STATIC_DRAW);
+
 	float rect[]
 		=
 	{
@@ -295,13 +318,13 @@ void Renderer::DrawSandBox()
 
     int timeLoc = glGetUniformLocation(program, "u_Time");
     glUniform1f(timeLoc, g_time);
-    g_time += 0.01f;
+    g_time += 0.008f;
 
     int pointULoc = glGetUniformLocation(program, "u_Point");
     glUniform2f(pointULoc, 0.3f, 0.3f);
 
     int pointsULoc = glGetUniformLocation(program, "u_Points");
-    std::vector<float> points = {0.1f, 0.1f, 0.5f, 0.5f, 0.9f, 0.9f};
+    std::vector<float> points = {0.1f, 0.1f, 0.5f, 0.5f, 0.8f, 0.8f};
     glUniform2fv(pointsULoc, points.size(), points.data());
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -646,6 +669,53 @@ void Renderer::CreateHorizontalVBO(int iHorizontalVertexCount)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verticesLine.size(), verticesLine.data(), GL_STATIC_DRAW);
 }
 
+void Renderer::CreateTextures()
+{
+    static const GLulong checkerboard[] =
+    {
+    0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+    0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+    0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+    0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+    0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+    0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF,
+    0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000,
+    0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF, 0x00000000, 0xFFFFFFFF
+    };
+
+    glGenTextures(1, &m_CheckerBoardTexture);
+    glBindTexture(GL_TEXTURE_2D, m_CheckerBoardTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 8, 8, 0, GL_RGBA, GL_UNSIGNED_BYTE, checkerboard);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
+{
+    //Load Png
+    std::vector<unsigned char> image;
+    unsigned width, height;
+    unsigned error = lodepng::decode(image, width, height, filePath);
+    if (error != 0)
+    {
+        std::cout << "PNG image loading failed:" << filePath << std::endl;
+        assert(0);
+    }
+
+    GLuint temp;
+    glGenTextures(1, &temp);
+    glBindTexture(GL_TEXTURE_2D, temp);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, samplingMethod);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod);
+
+    return temp;
+}
+
 void Renderer::DrawAlphaClear()
 {
     GLuint program = m_AlphaClearShader;
@@ -689,6 +759,36 @@ void Renderer::DrawHorizontalLine()
         glUniform1f(timeLoc, g_time + (float)i * 0.2f);
         glDrawArrays(GL_LINE_STRIP, 0, m_HorizontalLineVertexCount);
     }
+
+    glDisable(GL_BLEND);
+}
+
+void Renderer::DrawTextureSandBox()
+{
+    GLuint program = m_TextureSandboxShader;
+    glUseProgram(program);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int PosLoc = glGetAttribLocation(program, "a_Position");
+    glEnableVertexAttribArray(PosLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+    glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+
+    int TexLoc = glGetAttribLocation(program, "a_TexPos");
+    glEnableVertexAttribArray(TexLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
+    glVertexAttribPointer(TexLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+    GLuint samplerULoc = glGetUniformLocation(program, "u_TexSampler");
+    glUniform1i(samplerULoc, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDisable(GL_BLEND);
 }
