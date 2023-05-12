@@ -39,6 +39,13 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 
     //Load Textures
     m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
+    m_0Texture = CreatePngTexture("./Textures/0.png", GL_NEAREST);
+    m_1Texture = CreatePngTexture("./Textures/1.png", GL_NEAREST);
+    m_2Texture = CreatePngTexture("./Textures/2.png", GL_NEAREST);
+    m_3Texture = CreatePngTexture("./Textures/3.png", GL_NEAREST);
+    m_4Texture = CreatePngTexture("./Textures/4.png", GL_NEAREST);
+    m_5Texture = CreatePngTexture("./Textures/5.png", GL_NEAREST);
+    m_MultiTexture = CreatePngTexture("./Textures/6.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -783,10 +790,40 @@ void Renderer::DrawTextureSandBox()
     glBindBuffer(GL_ARRAY_BUFFER, m_TextureSandboxVBO);
     glVertexAttribPointer(TexLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
 
-    GLuint samplerULoc = glGetUniformLocation(program, "u_TexSampler");
-    glUniform1i(samplerULoc, 0);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
+    glBindTexture(GL_TEXTURE_2D, m_0Texture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_1Texture);
+
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_2Texture);
+
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_3Texture);
+
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, m_4Texture);
+
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, m_5Texture);
+
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, m_MultiTexture);
+
+    int texID[] = { 0, 1 };
+    GLuint multisamplerULoc = glGetUniformLocation(program, "uMultiTexSampler");
+    glUniform1iv(multisamplerULoc, 2, texID);
+
+    GLuint samplerULoc = glGetUniformLocation(program, "uTexSampler");
+    //glUniform1i(samplerULoc, (int)(g_time) % 6);
+    glUniform1i(samplerULoc, 6);
+
+    GLuint stepLoc = glGetUniformLocation(program, "u_Step");
+    glUniform1f(stepLoc, (int)g_time % 4);
+
+    /*glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_RGBTexture);*/
 
     GLuint repeatULoc = glGetUniformLocation(program, "u_XYRepeat");
     glUniform2f(repeatULoc, 2.0f, 2.0f);
