@@ -788,6 +788,10 @@ void Renderer::DrawTextureSandBox()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 
+    GLuint repeatULoc = glGetUniformLocation(program, "u_XYRepeat");
+    glUniform2f(repeatULoc, 2.0f, 2.0f);
+    g_time += 0.08f;
+
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDisable(GL_BLEND);

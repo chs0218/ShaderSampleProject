@@ -3,9 +3,10 @@
 layout(location=0) out vec4 FragColor;
 
 uniform sampler2D uTexSampler;
+uniform vec2 u_XYRepeat;
 in vec2 v_TexPos;
 
-void problem1()
+void P1()
 {
     float x = v_TexPos.x;
     float y = 1.f - abs(v_TexPos.y * 2.f - 1.f);
@@ -13,35 +14,80 @@ void problem1()
     FragColor = texture(uTexSampler, vec2(x, y));
 
 }
-void problem2()
+void P2()
 {
-    float x = v_TexPos.x * 3.f;
-    float correction = (2 - int(x)) * 0.33f;
-    float y = v_TexPos.y;
+    float x = fract(v_TexPos.x * 3.0f);
+    float dy = v_TexPos.y / 3.0f;
+    float y = floor(3.0f * (1.0f - v_TexPos.x)) / 3.0f + dy;
 
-    FragColor = texture(uTexSampler, vec2(fract(x), y / 3.f + correction));
+    vec2 newTexPos = vec2(x, y);
+
+    FragColor = texture(uTexSampler, newTexPos);
 }
-void problem3()
+void P3()
 {
-    float x = v_TexPos.x * 3.f;
-    float correction = int(x) * 0.33f;
-    float y = v_TexPos.y;
+    float x = fract(v_TexPos.x * 3.0f);
+    float dy = v_TexPos.y / 3.0f;
+    float y = floor(3.0f * v_TexPos.x) / 3.0f + dy;
 
-    FragColor = texture(uTexSampler, vec2(fract(x), y / 3.f + correction));
+    vec2 newTexPos = vec2(x, y);
+
+    FragColor = texture(uTexSampler, newTexPos);
 }
-void problem4()
+void P4()
 {
     float x = v_TexPos.x;
-    float y = v_TexPos.y * 3.f;
-    float correction = float(int(y) - 1) * 1.f / 3.f;
+    float dy = fract(v_TexPos.y * 3.0f) / 3.0f;
+    float y = floor(3.0f * (1.0f - v_TexPos.y)) / 3.0f + dy;
 
-    FragColor = texture(uTexSampler, vec2(x, y / 3.f + correction));
+    vec2 newTexPos = vec2(x, y);
+
+    FragColor = texture(uTexSampler, newTexPos);
+}
+void P5()
+{
+    float x_repeat = u_XYRepeat.x;
+    float y_repeat = u_XYRepeat.y;
+    float dx = v_TexPos.x * x_repeat;
+    float x = fract(dx + floor((1.0f - v_TexPos.y) * y_repeat) * 0.5f);
+    float y = fract(v_TexPos.y * y_repeat);
+
+    vec2 newTexPos = vec2(x, y);
+    FragColor = texture(uTexSampler, newTexPos);
+}
+void P6()
+{
+    float x_repeat = u_XYRepeat.x;
+    float y_repeat = u_XYRepeat.y;
+
+    float dy = v_TexPos.y * y_repeat;
+    float x = fract(v_TexPos.x * x_repeat);
+    float y = fract(dy + floor(v_TexPos.x * x_repeat) * 0.5f);
+
+    vec2 newTexPos = vec2(x, y);
+    FragColor = texture(uTexSampler, newTexPos);
+}
+// 시험에 나올 예정
+void P7()
+{
+    //float x_repeat = u_XYRepeat.x;
+    //float y_repeat = u_XYRepeat.y;
+
+    float x = fract(v_TexPos.x + (1.0f - v_TexPos.y));
+    float y = fract(v_TexPos.x + v_TexPos.y);
+
+    vec2 newTexPos = vec2(x, y);
+    FragColor = texture(uTexSampler, newTexPos);
+    //FragColor = vec4(x);
 }
 void main()
 {
     //FragColor = vec4(v_TexPos, 0.f, 1.f);
-    //problem1();
-    //problem2();
-    //problem3();
-    problem4();
+    //P1();
+    //P2();
+    //P3();
+    P4();
+    //P5();
+    //P6();
+    //P7();
 }
