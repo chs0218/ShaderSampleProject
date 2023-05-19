@@ -46,6 +46,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     m_4Texture = CreatePngTexture("./Textures/4.png", GL_NEAREST);
     m_5Texture = CreatePngTexture("./Textures/5.png", GL_NEAREST);
     m_MultiTexture = CreatePngTexture("./Textures/6.png", GL_NEAREST);
+    m_ParticleTexture = CreatePngTexture("./Textures/particle.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -297,7 +298,12 @@ void Renderer::DrawParticle()
 	int accelLoc = glGetUniformLocation(program, "u_Accel");
 	glUniform3f(accelLoc, 0.f, -2.8f, 0.f);
 
-	g_time += 0.01;
+	g_time += 0.008;
+
+    int texULoc = glGetUniformLocation(program, "u_Texture");
+    glUniform1i(texULoc, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_ParticleTexture);
 
 	glDrawArrays(GL_TRIANGLES, 0, m_ParticleVertexCount);
 
@@ -333,6 +339,11 @@ void Renderer::DrawSandBox()
     int pointsULoc = glGetUniformLocation(program, "u_Points");
     std::vector<float> points = {0.1f, 0.1f, 0.5f, 0.5f, 0.8f, 0.8f};
     glUniform2fv(pointsULoc, points.size(), points.data());
+
+    int texULoc = glGetUniformLocation(program, "u_Texture");
+    glUniform1i(texULoc, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -403,7 +414,7 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	std::vector<float> v_PosCol;
 
-	float particleSize = 0.01f;
+	float particleSize = 0.1f;
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{

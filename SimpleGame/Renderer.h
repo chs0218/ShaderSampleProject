@@ -51,7 +51,7 @@ private:
 	GLuint m_ParticleColorVBO = -1;
 	GLuint m_ParticlePosColVBO = -1;
 	GLuint m_ParticleVertexCount = -1;
-
+    GLuint m_ParticleTexture = -1;
 
 	//for fragment sandbox
 	GLuint m_FragmentSandboxShader = 0;

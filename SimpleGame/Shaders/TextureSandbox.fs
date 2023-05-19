@@ -87,8 +87,9 @@ void P7()
 
 void MultiTexture()
 {
-    float x = u_Step * 0.25f + v_TexPos.x * 0.25f;
-    float y = v_TexPos.y * 0.5f;
+    float x = v_TexPos.x;
+    float y = (u_Step + v_TexPos.y) / 6;
+    //float y = u_Step * 0.25f + v_TexPos.y * 0.5f;
 
     vec2 newTexPos = vec2(x, y);
     FragColor = texture(uTexSampler, fract(newTexPos));

@@ -4,6 +4,8 @@ layout(location=0) out vec4 FragColor;
 
 in vec2 v_UV;
 
+uniform sampler2D u_Texture;
+
 uniform vec2 u_Point;
 uniform vec2 u_Points[3];
 uniform float u_Time;
@@ -83,7 +85,30 @@ void sinGraph()
             FragColor += vec4(1.f * newAlpha * newLines);
     }
 }
+void realFlag()
+{
+    float period = (v_UV.x + 1.0f) * 1.0f;
+    float xValue = v_UV.x * 2.0f * c_PI * period;
+    float yValue = ((1.0f - v_UV.y) - 0.5f) * 2.0f;
+    float sinValue = 0.25f * sin(xValue - 15.0f * u_Time);
+
+    if(sinValue * v_UV.x + 0.75f > yValue 
+    && sinValue * v_UV.x - 0.75f < yValue)
+    {
+        float vX = v_UV.x;
+        float yWidth = 1.5f;
+        float yDistance = yValue - (sinValue * v_UV.x - 0.75f);
+        float vY = 1.0f - yDistance / yWidth;
+        //FragColor = vec4(vY);
+        FragColor = texture(u_Texture, vec2(vX, vY));
+    }
+    else
+    {
+        FragColor = vec4(0.0f);
+    }
+}
 void main()
 {
-    sinGraph();
+    //sinGraph();
+    realFlag();
 }
