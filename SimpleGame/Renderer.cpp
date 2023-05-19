@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Renderer.h"
 #include "LoadPng.h"
 #include <assert.h>
@@ -27,12 +27,14 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     m_AlphaClearShader = CompileShaders("./Shaders/AlphaClear.vs", "./Shaders/AlphaClear.fs");
     m_VertexSandBoxShader = CompileShaders("./Shaders/VertexSandbox.vs", "./Shaders/VertexSandbox.fs");
     m_TextureSandboxShader = CompileShaders("./Shaders/TextureSandBox.vs", "./Shaders/TextureSandBox.fs");
-	
+    m_VertexFlagShader = CompileShaders("./Shaders/Flag_By_Vertex.vs", "./Shaders/Flag_By_Vertex.fs");
+
 	//Create VBOs
 	CreateVertexBufferObjects();
 	CreateParticleVBO(10000);
 	CreateSandBoxVBO();
     CreateHorizontalVBO(50);
+    CreateVertexFlagVBO();
 
     //Create Textures
     CreateTextures();
@@ -47,6 +49,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     m_5Texture = CreatePngTexture("./Textures/5.png", GL_NEAREST);
     m_MultiTexture = CreatePngTexture("./Textures/6.png", GL_NEAREST);
     m_ParticleTexture = CreatePngTexture("./Textures/particle.png", GL_NEAREST);
+    m_ExplosionTexture = CreatePngTexture("./Textures/explosion.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -89,7 +92,7 @@ void Renderer::CreateVertexBufferObjects()
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
 {
-	//½¦ÀÌ´õ ¿ÀºêÁ§Æ® »ı¼º
+	//ì‰ì´ë” ì˜¤ë¸Œì íŠ¸ ìƒì„±
 	GLuint ShaderObj = glCreateShader(ShaderType);
 
 	if (ShaderObj == 0) {
@@ -100,25 +103,25 @@ void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum S
 	p[0] = pShaderText;
 	GLint Lengths[1];
 	Lengths[0] = strlen(pShaderText);
-	//½¦ÀÌ´õ ÄÚµå¸¦ ½¦ÀÌ´õ ¿ÀºêÁ§Æ®¿¡ ÇÒ´ç
+	//ì‰ì´ë” ì½”ë“œë¥¼ ì‰ì´ë” ì˜¤ë¸Œì íŠ¸ì— í• ë‹¹
 	glShaderSource(ShaderObj, 1, p, Lengths);
 
-	//ÇÒ´çµÈ ½¦ÀÌ´õ ÄÚµå¸¦ ÄÄÆÄÀÏ
+	//í• ë‹¹ëœ ì‰ì´ë” ì½”ë“œë¥¼ ì»´íŒŒì¼
 	glCompileShader(ShaderObj);
 
 	GLint success;
-	// ShaderObj °¡ ¼º°øÀûÀ¸·Î ÄÄÆÄÀÏ µÇ¾ú´ÂÁö È®ÀÎ
+	// ShaderObj ê°€ ì„±ê³µì ìœ¼ë¡œ ì»´íŒŒì¼ ë˜ì—ˆëŠ”ì§€ í™•ì¸
 	glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		GLchar InfoLog[1024];
 
-		//OpenGL ÀÇ shader log µ¥ÀÌÅÍ¸¦ °¡Á®¿È
+		//OpenGL ì˜ shader log ë°ì´í„°ë¥¼ ê°€ì ¸ì˜´
 		glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
 		fprintf(stderr, "Error compiling shader type %d: '%s'\n", ShaderType, InfoLog);
 		printf("%s \n", pShaderText);
 	}
 
-	// ShaderProgram ¿¡ attach!!
+	// ShaderProgram ì— attach!!
 	glAttachShader(ShaderProgram, ShaderObj);
 }
 
@@ -141,43 +144,43 @@ bool Renderer::ReadFile(char* filename, std::string *target)
 
 GLuint Renderer::CompileShaders(char* filenameVS, char* filenameFS)
 {
-	GLuint ShaderProgram = glCreateProgram(); //ºó ½¦ÀÌ´õ ÇÁ·Î±×·¥ »ı¼º
+	GLuint ShaderProgram = glCreateProgram(); //ë¹ˆ ì‰ì´ë” í”„ë¡œê·¸ë¨ ìƒì„±
 
-	if (ShaderProgram == 0) { //½¦ÀÌ´õ ÇÁ·Î±×·¥ÀÌ ¸¸µé¾îÁ³´ÂÁö È®ÀÎ
+	if (ShaderProgram == 0) { //ì‰ì´ë” í”„ë¡œê·¸ë¨ì´ ë§Œë“¤ì–´ì¡ŒëŠ”ì§€ í™•ì¸
 		fprintf(stderr, "Error creating shader program\n");
 	}
 
 	std::string vs, fs;
 
-	//shader.vs °¡ vs ¾ÈÀ¸·Î ·ÎµùµÊ
+	//shader.vs ê°€ vs ì•ˆìœ¼ë¡œ ë¡œë”©ë¨
 	if (!ReadFile(filenameVS, &vs)) {
 		printf("Error compiling vertex shader\n");
 		return -1;
 	};
 
-	//shader.fs °¡ fs ¾ÈÀ¸·Î ·ÎµùµÊ
+	//shader.fs ê°€ fs ì•ˆìœ¼ë¡œ ë¡œë”©ë¨
 	if (!ReadFile(filenameFS, &fs)) {
 		printf("Error compiling fragment shader\n");
 		return -1;
 	};
 
-	// ShaderProgram ¿¡ vs.c_str() ¹öÅØ½º ½¦ÀÌ´õ¸¦ ÄÄÆÄÀÏÇÑ °á°ú¸¦ attachÇÔ
+	// ShaderProgram ì— vs.c_str() ë²„í…ìŠ¤ ì‰ì´ë”ë¥¼ ì»´íŒŒì¼í•œ ê²°ê³¼ë¥¼ attachí•¨
 	AddShader(ShaderProgram, vs.c_str(), GL_VERTEX_SHADER);
 
-	// ShaderProgram ¿¡ fs.c_str() ÇÁ·¹±×¸ÕÆ® ½¦ÀÌ´õ¸¦ ÄÄÆÄÀÏÇÑ °á°ú¸¦ attachÇÔ
+	// ShaderProgram ì— fs.c_str() í”„ë ˆê·¸ë¨¼íŠ¸ ì‰ì´ë”ë¥¼ ì»´íŒŒì¼í•œ ê²°ê³¼ë¥¼ attachí•¨
 	AddShader(ShaderProgram, fs.c_str(), GL_FRAGMENT_SHADER);
 
 	GLint Success = 0;
 	GLchar ErrorLog[1024] = { 0 };
 
-	//Attach ¿Ï·áµÈ shaderProgram À» ¸µÅ·ÇÔ
+	//Attach ì™„ë£Œëœ shaderProgram ì„ ë§í‚¹í•¨
 	glLinkProgram(ShaderProgram);
 
-	//¸µÅ©°¡ ¼º°øÇß´ÂÁö È®ÀÎ
+	//ë§í¬ê°€ ì„±ê³µí–ˆëŠ”ì§€ í™•ì¸
 	glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
 
 	if (Success == 0) {
-		// shader program ·Î±×¸¦ ¹Ş¾Æ¿È
+		// shader program ë¡œê·¸ë¥¼ ë°›ì•„ì˜´
 		glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
 		std::cout << filenameVS << ", " << filenameFS << " Error linking shader program\n" << ErrorLog;
 		return -1;
@@ -687,6 +690,35 @@ void Renderer::CreateHorizontalVBO(int iHorizontalVertexCount)
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * verticesLine.size(), verticesLine.data(), GL_STATIC_DRAW);
 }
 
+void Renderer::CreateVertexFlagVBO()
+{
+    //float basePosX = -0.5f;
+    //float basePosY = -0.5f;
+    //float targetPosX = 0.5f;
+    //float targetPosY = 0.5f;
+
+    //int pointCountX = 8;
+    //int pointCountY = 8; 
+
+    //float width = targetPosX - basePosX;
+    //float height = targetPosY - basePosY;
+
+    //float* point = new float[pointCountX * pointCountY * 2];
+    //float* vertices = new float[(pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3];
+    //
+    //gDummyVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
+
+    ////Prepare pointsâ€‹
+    //for (int x = 0; x < pointCountX; ++x)
+    //{
+    //    for (int y = 0; y < pointCountY; ++y)
+    //    {
+    //        point[(y * pointCountX + x) * 2 + 0] = basePosX + width * (x / (float)(pointCountX - 1));
+    //        point[(y * pointCountX + x) * 2 + 1] = basePosY + height * (y / (float)(pointCountY - 1));
+    //    }
+    //}
+}
+
 void Renderer::CreateTextures()
 {
     static const GLulong checkerboard[] =
@@ -820,7 +852,10 @@ void Renderer::DrawTextureSandBox()
     glBindTexture(GL_TEXTURE_2D, m_5Texture);
 
     glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, m_MultiTexture);
+    glBindTexture(GL_TEXTURE_2D, m_6Texture);
+
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, m_ExplosionTexture);
 
     int texID[] = { 0, 1 };
     GLuint multisamplerULoc = glGetUniformLocation(program, "uMultiTexSampler");
@@ -828,10 +863,13 @@ void Renderer::DrawTextureSandBox()
 
     GLuint samplerULoc = glGetUniformLocation(program, "uTexSampler");
     //glUniform1i(samplerULoc, (int)(g_time) % 6);
-    glUniform1i(samplerULoc, 6);
+    glUniform1i(samplerULoc, 7);
 
     GLuint stepLoc = glGetUniformLocation(program, "u_Step");
-    glUniform1f(stepLoc, (int)g_time % 4);
+    glUniform1f(stepLoc, (int)g_time % 6);
+
+    GLuint seqLoc = glGetUniformLocation(program, "u_SeuqNum");
+    glUniform1f(seqLoc, (int)(g_time * 12.5f) % 48);
 
     /*glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_RGBTexture);*/
@@ -843,4 +881,14 @@ void Renderer::DrawTextureSandBox()
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
     glDisable(GL_BLEND);
+}
+
+void Renderer::DrawVertexFlag()
+{
+    glUseProgram(m_VertexFlagShader);
+    int attrribPosition = glGetAttribLocation(m_VertexFlagShader, "a_Position");
+    glEnableVertexAttribArray(attrribPosition);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VertexFlagVBO);
+    glVertexAttribPointer(attrribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glDrawArrays(GL_TRIANGLES, 0, gDummyVertexCount);
 }

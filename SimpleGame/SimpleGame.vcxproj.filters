@@ -85,5 +85,11 @@
     <None Include="Shaders\TextureSandbox.vs">
       <Filter>소스 파일\Shaders</Filter>
     </None>
+    <None Include="Shaders\Flag_By_Vertex.fs">
+      <Filter>소스 파일\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Flag_By_Vertex.vs">
+      <Filter>소스 파일\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

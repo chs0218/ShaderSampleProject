@@ -174,6 +174,8 @@
   <ItemGroup>
     <None Include="Shaders\AlphaClear.fs" />
     <None Include="Shaders\AlphaClear.vs" />
+    <None Include="Shaders\Flag_By_Vertex.fs" />
+    <None Include="Shaders\Flag_By_Vertex.vs" />
     <None Include="Shaders\Particle.fs" />
     <None Include="Shaders\Particle.vs" />
     <None Include="Shaders\SandBox.fs" />
