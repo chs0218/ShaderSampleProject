@@ -41,6 +41,7 @@ private:
     void CreateVertexFlagVBO();
     void CreateTextures();
     GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
+    void CreateFBOs();
 
 	GLuint m_ParticleShader = -1;
 	GLuint m_ParticleVBO = -1;
@@ -99,5 +100,14 @@ private:
 	GLuint m_testVBO = 0;
 	GLuint m_testVBO1 = 0;
 	GLuint m_ColorVBO = 0;
+
+    //FBO
+    GLuint m_AFBOTexture = 0;
+    GLuint m_BFBOTexture = 0;
+    GLuint m_CFBOTexture = 0;
+
+    GLuint m_DepthRenderBuffer = 0;
+
+    GLuint m_A_FBO = 0;
 };
 

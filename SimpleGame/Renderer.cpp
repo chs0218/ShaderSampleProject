@@ -36,6 +36,9 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     CreateHorizontalVBO(50);
     CreateVertexFlagVBO();
 
+    //Create FrameBufferObjects
+    CreateFBOs();
+
     //Create Textures
     CreateTextures();
 
@@ -315,6 +318,9 @@ void Renderer::DrawParticle()
 
 void Renderer::DrawSandBox()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, 1000, 1000);
+
 	GLuint program = m_FragmentSandboxShader;
 	glUseProgram(program);
 
@@ -692,31 +698,85 @@ void Renderer::CreateHorizontalVBO(int iHorizontalVertexCount)
 
 void Renderer::CreateVertexFlagVBO()
 {
-    //float basePosX = -0.5f;
-    //float basePosY = -0.5f;
-    //float targetPosX = 0.5f;
-    //float targetPosY = 0.5f;
+    float basePosX = -0.5f;
+    float basePosY = -0.5f;
+    float targetPosX = 0.5f;
+    float targetPosY = 0.5f;
 
-    //int pointCountX = 8;
-    //int pointCountY = 8; 
+    int pointCountX = 8;
+    int pointCountY = 8;
 
-    //float width = targetPosX - basePosX;
-    //float height = targetPosY - basePosY;
+    float width = targetPosX - basePosX;
+    float height = targetPosY - basePosY;
 
-    //float* point = new float[pointCountX * pointCountY * 2];
-    //float* vertices = new float[(pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3];
-    //
-    //gDummyVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
+    float* point = new float[pointCountX * pointCountY * 2];
+    float* vertices = new float[(pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3];
+    gDummyVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
 
-    ////Prepare points​
-    //for (int x = 0; x < pointCountX; ++x)
-    //{
-    //    for (int y = 0; y < pointCountY; ++y)
-    //    {
-    //        point[(y * pointCountX + x) * 2 + 0] = basePosX + width * (x / (float)(pointCountX - 1));
-    //        point[(y * pointCountX + x) * 2 + 1] = basePosY + height * (y / (float)(pointCountY - 1));
-    //    }
-    //}
+    //Prepare points
+    for (int x = 0; x < pointCountX; x++)
+    {
+        for (int y = 0; y < pointCountY; y++)
+        {
+            point[(y * pointCountX + x) * 2 + 0] = basePosX + width * (x / (float)(pointCountX - 1));
+            point[(y * pointCountX + x) * 2 + 1] = basePosY + height * (y / (float)(pointCountY - 1));
+        }
+    }
+
+    //Make triangles
+    int vertIndex = 0;
+    for (int x = 0; x < pointCountX - 1; x++)
+    {
+        for (int y = 0; y < pointCountY - 1; y++)
+        {
+            //Triangle part 1
+            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+
+            //Triangle part 2
+            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+            vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
+            vertIndex++;
+            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
+            vertIndex++;
+            vertices[vertIndex] = 0.f;
+            vertIndex++;
+        }
+    }
+
+    glGenBuffers(1, &m_VertexFlagVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_VertexFlagVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3, vertices, GL_STATIC_DRAW);
+
+    delete[] point;
+    delete[] vertices;
 }
 
 void Renderer::CreateTextures()
@@ -764,6 +824,53 @@ GLuint Renderer::CreatePngTexture(char* filePath, GLuint samplingMethod)
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, samplingMethod);
 
     return temp;
+}
+
+void Renderer::CreateFBOs()
+{
+    glGenTextures(1, &m_AFBOTexture);
+    glBindTexture(GL_TEXTURE_2D, m_AFBOTexture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    glGenTextures(1, &m_BFBOTexture);
+    glBindTexture(GL_TEXTURE_2D, m_BFBOTexture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    glGenTextures(1, &m_CFBOTexture);
+    glBindTexture(GL_TEXTURE_2D, m_CFBOTexture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    glGenRenderbuffers(1, &m_DepthRenderBuffer);
+    glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    glGenFramebuffers(1, &m_A_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_A_FBO, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "fbo creation failed\n" << std::endl;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void Renderer::DrawAlphaClear()
@@ -887,8 +994,11 @@ void Renderer::DrawVertexFlag()
 {
     glUseProgram(m_VertexFlagShader);
     int attrribPosition = glGetAttribLocation(m_VertexFlagShader, "a_Position");
+
     glEnableVertexAttribArray(attrribPosition);
+
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexFlagVBO);
     glVertexAttribPointer(attrribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
     glDrawArrays(GL_TRIANGLES, 0, gDummyVertexCount);
 }
