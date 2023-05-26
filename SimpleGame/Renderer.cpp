@@ -53,6 +53,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     m_MultiTexture = CreatePngTexture("./Textures/6.png", GL_NEAREST);
     m_ParticleTexture = CreatePngTexture("./Textures/particle.png", GL_NEAREST);
     m_ExplosionTexture = CreatePngTexture("./Textures/explosion.png", GL_NEAREST);
+    m_FlagTexture = CreatePngTexture("./Textures/korea.png", GL_NEAREST);
 
 	if (m_SolidRectShader > 0 && m_VBORect > 0)
 	{
@@ -703,15 +704,20 @@ void Renderer::CreateVertexFlagVBO()
     float targetPosX = 0.5f;
     float targetPosY = 0.5f;
 
-    int pointCountX = 8;
-    int pointCountY = 8;
+    int pointCountX = 64;
+    int pointCountY = 64;
+
+    gDummyVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
 
     float width = targetPosX - basePosX;
     float height = targetPosY - basePosY;
 
-    float* point = new float[pointCountX * pointCountY * 2];
-    float* vertices = new float[(pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3];
-    gDummyVertexCount = (pointCountX - 1) * (pointCountY - 1) * 2 * 3;
+    std::vector<float> point;
+    point.resize(pointCountX * pointCountY * 2);
+
+    std::vector<float> vertices;
+
+    std::vector<float> morphMuls;
 
     //Prepare points
     for (int x = 0; x < pointCountX; x++)
@@ -729,54 +735,47 @@ void Renderer::CreateVertexFlagVBO()
     {
         for (int y = 0; y < pointCountY - 1; y++)
         {
-            //Triangle part 1
-            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + x) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
+            vertices.push_back(point[(y * pointCountX + x) * 2 + 0]);
+            vertices.push_back(point[(y * pointCountX + x) * 2 + 1]);
+            vertices.push_back(0.f);
 
-            //Triangle part 2
-            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[(y * pointCountX + x) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
-            vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[(y * pointCountX + (x + 1)) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 0];
-            vertIndex++;
-            vertices[vertIndex] = point[((y + 1) * pointCountX + (x + 1)) * 2 + 1];
-            vertIndex++;
-            vertices[vertIndex] = 0.f;
-            vertIndex++;
+            morphMuls.push_back(rand() % 100 * 0.01);
+
+            vertices.push_back(point[((y + 1) * pointCountX + (x + 1)) * 2 + 0]);
+            vertices.push_back(point[((y + 1) * pointCountX + (x + 1)) * 2 + 1]);
+            vertices.push_back(0.f);
+
+            morphMuls.push_back(rand() % 100 * 0.01);
+
+            vertices.push_back(point[((y + 1) * pointCountX + x) * 2 + 0]);
+            vertices.push_back(point[((y + 1) * pointCountX + x) * 2 + 1]);
+            vertices.push_back(0.f);
+
+            morphMuls.push_back(rand() % 100 * 0.01);
+
+            vertices.push_back(point[(y * pointCountX + x) * 2 + 0]);
+            vertices.push_back(point[(y * pointCountX + x) * 2 + 1]);
+            vertices.push_back(0.f);
+
+            morphMuls.push_back(rand() % 100 * 0.01);
+
+            vertices.push_back(point[(y * pointCountX + (x + 1)) * 2 + 0]);
+            vertices.push_back(point[(y * pointCountX + (x + 1)) * 2 + 1]);
+            vertices.push_back(0.f);
+
+            morphMuls.push_back(rand() % 100 * 0.01);
+
+            vertices.push_back(point[((y + 1) * pointCountX + (x + 1)) * 2 + 0]);
+            vertices.push_back(point[((y + 1) * pointCountX + (x + 1)) * 2 + 1]);
+            vertices.push_back(0.f);
+
+            morphMuls.push_back(rand() % 100 * 0.01);
         }
     }
 
     glGenBuffers(1, &m_VertexFlagVBO);
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexFlagVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (pointCountX - 1) * (pointCountY - 1) * 2 * 3 * 3, vertices, GL_STATIC_DRAW);
-
-    delete[] point;
-    delete[] vertices;
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 }
 
 void Renderer::CreateTextures()
@@ -999,6 +998,19 @@ void Renderer::DrawVertexFlag()
 
     glBindBuffer(GL_ARRAY_BUFFER, m_VertexFlagVBO);
     glVertexAttribPointer(attrribPosition, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    GLuint texULoc = glGetUniformLocation(m_VertexFlagShader, "u_Texture");
+    glUniform1i(texULoc, 0);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_FlagTexture);
+
+    GLuint morphULoc = glGetUniformLocation(m_VertexFlagShader, "u_MorphPos");
+    glUniform2f(morphULoc, 1.0f, -1.0f);
+
+    GLuint timeULoc = glGetUniformLocation(m_VertexFlagShader, "u_Time");
+    glUniform1f(timeULoc, g_time);
+    g_time += 0.016f;
 
     glDrawArrays(GL_TRIANGLES, 0, gDummyVertexCount);
 }

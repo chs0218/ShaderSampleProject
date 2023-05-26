@@ -74,6 +74,7 @@ private:
     GLuint m_CheckerBoardTexture = 0;
     GLuint m_ExplosionTexture = 0;
     GLuint m_RGBTexture = 0;
+    GLuint m_FlagTexture = 0;
 
     //for vertex flag
     GLuint m_VertexFlagShader = 0;
