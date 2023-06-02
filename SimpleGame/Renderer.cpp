@@ -271,6 +271,13 @@ void Renderer::SetVBO(GLuint nVBO, int vboLoc, int nFloatnum)
 
 void Renderer::DrawParticle()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+
+    GLenum drawBuffers = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, &drawBuffers);
+
 	GLuint program = m_ParticleShader;
 	glUseProgram(program);
 
@@ -306,7 +313,7 @@ void Renderer::DrawParticle()
 	int accelLoc = glGetUniformLocation(program, "u_Accel");
 	glUniform3f(accelLoc, 0.f, -2.8f, 0.f);
 
-	g_time += 0.008;
+	g_time += 0.016;
 
     int texULoc = glGetUniformLocation(program, "u_Texture");
     glUniform1i(texULoc, 0);
@@ -321,12 +328,12 @@ void Renderer::DrawParticle()
 void Renderer::DrawSandBox()
 {
     glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 
     GLenum drawBuffers[5] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2,
         GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
     glDrawBuffers(5, drawBuffers);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	GLuint program = m_FragmentSandboxShader;
 	glUseProgram(program);
@@ -347,7 +354,7 @@ void Renderer::DrawSandBox()
 
     int timeLoc = glGetUniformLocation(program, "u_Time");
     glUniform1f(timeLoc, g_time);
-    g_time += 0.008f;
+    //g_time += 0.008f;
 
     int pointULoc = glGetUniformLocation(program, "u_Point");
     glUniform2f(pointULoc, 0.3f, 0.3f);
@@ -364,12 +371,6 @@ void Renderer::DrawSandBox()
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	glDisable(GL_BLEND);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    DrawTexture(-0.5, 0.5, 256, 256, m_AFBOAttach_1_Texture);
-    DrawTexture(0.5, 0.5, 256, 256, m_AFBOAttach_2_Texture);
-    DrawTexture(-0.5, -0.5, 256, 256, m_AFBOAttach_3_Texture);
-    DrawTexture(0.5, -0.5, 256, 256, m_AFBOAttach_4_Texture);
 }
 
 void Renderer::GetGLPosition(float x, float y, float *newX, float *newY)
@@ -919,6 +920,15 @@ void Renderer::CreateFBOs()
     glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
+    glGenTextures(1, &m_DFBOTexture);
+    glBindTexture(GL_TEXTURE_2D, m_DFBOTexture);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
     glGenRenderbuffers(1, &m_DepthRenderBuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, m_DepthRenderBuffer);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
@@ -926,7 +936,7 @@ void Renderer::CreateFBOs()
 
     glGenFramebuffers(1, &m_A_FBO);
     glBindFramebuffer(GL_FRAMEBUFFER, m_A_FBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_A_FBO, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_AFBOTexture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_AFBOAttach_1_Texture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_AFBOAttach_2_Texture, 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_AFBOAttach_3_Texture, 0);
@@ -934,6 +944,39 @@ void Renderer::CreateFBOs()
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "fbo creation failed\n" << std::endl;
+    }
+
+    glGenFramebuffers(1, &m_B_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_BFBOTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "fbo creation failed\n" << std::endl;
+    }
+
+    glGenFramebuffers(1, &m_C_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_C_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_CFBOTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "fbo creation failed\n" << std::endl;
+    }
+
+    glGenFramebuffers(1, &m_D_FBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_DFBOTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, m_DepthRenderBuffer);
+
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE)
     {
         std::cout << "fbo creation failed\n" << std::endl;
@@ -968,6 +1011,18 @@ void Renderer::DrawTexture(float x, float y, float scaleX, float scaleY, GLuint 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
+void Renderer::DrawResult()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    DrawTexture(-0.75, -0.75, 128, 128, m_AFBOAttach_1_Texture);
+    DrawTexture(-0.25, -0.75, 128, 128, m_AFBOAttach_2_Texture);
+    DrawTexture(0.25, -0.75, 128, 128, m_AFBOAttach_3_Texture);
+    DrawTexture(0.75, -0.75, 128, 128, m_AFBOAttach_4_Texture);
+    DrawTexture(-0.75, -0.25, 128, 128, m_BFBOTexture);
+    DrawTexture(-0.25, -0.25, 128, 128, m_CFBOTexture);
+    DrawTexture(0.25, -0.25, 128, 128, m_DFBOTexture);
+}
+
 void Renderer::DrawAlphaClear()
 {
     GLuint program = m_AlphaClearShader;
@@ -989,6 +1044,13 @@ void Renderer::DrawAlphaClear()
 
 void Renderer::DrawHorizontalLine()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_C_FBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+
+    GLenum drawBuffers = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, &drawBuffers);
+
     GLuint program = m_VertexSandBoxShader;
     glUseProgram(program);
 
@@ -1004,7 +1066,7 @@ void Renderer::DrawHorizontalLine()
     int timeLoc = glGetUniformLocation(program, "u_Time");
     glUniform1f(timeLoc, g_time);
 
-    g_time += 0.016f;
+    //g_time += 0.016f;
 
     for (int i = 0; i < 10; i++)
     {
@@ -1017,6 +1079,13 @@ void Renderer::DrawHorizontalLine()
 
 void Renderer::DrawTextureSandBox()
 {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
+
+    GLenum drawBuffers = { GL_COLOR_ATTACHMENT0 };
+    glDrawBuffers(1, &drawBuffers);
+
     GLuint program = m_TextureSandboxShader;
     glUseProgram(program);
 
@@ -1078,7 +1147,7 @@ void Renderer::DrawTextureSandBox()
 
     GLuint repeatULoc = glGetUniformLocation(program, "u_XYRepeat");
     glUniform2f(repeatULoc, 2.0f, 2.0f);
-    g_time += 0.08f;
+    //g_time += 0.08f;
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
@@ -1109,4 +1178,6 @@ void Renderer::DrawVertexFlag()
     g_time += 0.016f;
 
     glDrawArrays(GL_TRIANGLES, 0, gDummyVertexCount);
+
+    DrawTexture(-0.75f, -0.75f, 128.f, 128.f, m_FlagTexture);
 }

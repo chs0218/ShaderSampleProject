@@ -26,6 +26,8 @@ public:
     void DrawHorizontalLine();
     void DrawTextureSandBox();
     void DrawVertexFlag();
+
+    void DrawResult();
 private:
 	void Initialize(int windowSizeX, int windowSizeY);
 	void SetVBO(GLuint nVBO, int vboLoc, int nFloatnum);
@@ -110,10 +112,14 @@ private:
     GLuint m_AFBOAttach_4_Texture = 0;
     GLuint m_BFBOTexture = 0;
     GLuint m_CFBOTexture = 0;
+    GLuint m_DFBOTexture = 0;
 
     GLuint m_DepthRenderBuffer = 0;
 
     GLuint m_A_FBO = 0;
+    GLuint m_B_FBO = 0;
+    GLuint m_C_FBO = 0;
+    GLuint m_D_FBO = 0;
 
     //DrawTexture
     void DrawTexture(float x, float y, float scaleX, float scaleY, GLuint texID);

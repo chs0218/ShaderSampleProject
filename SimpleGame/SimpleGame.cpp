@@ -27,12 +27,12 @@ void RenderScene(void)
 	// Renderer Test
 	//g_Renderer->DrawSolidRect(0, 0, 0, 4, 1, 0, 1, 1);
 	//g_Renderer->Class0310_Rendering();
-	//g_Renderer->DrawParticle();
+	g_Renderer->DrawParticle();
     g_Renderer->DrawSandBox();
-    //g_Renderer->DrawHorizontalLine();
-    //g_Renderer->DrawTextureSandBox();
+    g_Renderer->DrawHorizontalLine();
+    g_Renderer->DrawTextureSandBox();
     //g_Renderer->DrawVertexFlag();
-
+    g_Renderer->DrawResult();
 	glutSwapBuffers();
 }
 

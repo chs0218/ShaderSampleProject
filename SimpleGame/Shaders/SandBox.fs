@@ -107,15 +107,15 @@ void sinGraph()
         float newLines = sin(newUV.x * 200.0f - newTime * 5); 
 
         if(newUV.y > sinValue && newUV.y < sinValue + width)
-            FragColor0 += vec4(1.f * newAlpha * newLines);
+            FragColor1 += vec4(1.f * newAlpha * newLines);
     }
 }
 void main()
 {
     UVTest();
-    circle();
+    //circle();
     circles();
     radar();
     realFlag();
-    //sinGraph();
+    sinGraph();
 }
