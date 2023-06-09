@@ -29,6 +29,7 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
     m_TextureSandboxShader = CompileShaders("./Shaders/TextureSandBox.vs", "./Shaders/TextureSandBox.fs");
     m_VertexFlagShader = CompileShaders("./Shaders/Flag_By_Vertex.vs", "./Shaders/Flag_By_Vertex.fs");
     m_DrawTextureShader = CompileShaders("./Shaders/DrawTexture.vs", "./Shaders/DrawTexture.fs");
+    m_StudyShader = CompileShaders("./Shaders/StudyShader.vs", "./Shaders/StudyShader.fs");
 
 	//Create VBOs
 	CreateVertexBufferObjects();
@@ -36,12 +37,16 @@ void Renderer::Initialize(int windowSizeX, int windowSizeY)
 	CreateSandBoxVBO();
     CreateHorizontalVBO(50);
     CreateVertexFlagVBO();
+    CreateStudyVBO();
 
     //Create FrameBufferObjects
     CreateFBOs();
 
     //Create Textures
     CreateTextures();
+
+    //Prepare Bloom
+    PrepareBloom();
 
     //Load Textures
     m_RGBTexture = CreatePngTexture("./rgb.png", GL_NEAREST);
@@ -271,12 +276,12 @@ void Renderer::SetVBO(GLuint nVBO, int vboLoc, int nFloatnum)
 
 void Renderer::DrawParticle()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO);
+   /* glBindFramebuffer(GL_FRAMEBUFFER, m_B_FBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 
     GLenum drawBuffers = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, &drawBuffers);
+    glDrawBuffers(1, &drawBuffers);*/
 
 	GLuint program = m_ParticleShader;
 	glUseProgram(program);
@@ -437,7 +442,7 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	std::vector<float> v_PosCol;
 
-	float particleSize = 0.1f;
+	float particleSize = 0.02f;
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{
@@ -454,8 +459,8 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 
 	for (int i = 0; i < numParticleCount; ++i)
 	{
-		float velX = 2.f * (((float)rand() / (float)RAND_MAX) - 0.5f);
-		float velY = 4.f * (((float)rand() / (float)RAND_MAX));
+		float velX = 2.f * ((float)rand() / (float)RAND_MAX) - 1.f;
+		float velY = 2.f * (((float)rand() / (float)RAND_MAX));
 
 		v_Velocities.emplace_back(std::array<float, 3>{velX, velY, 0.0f});
 		v_Velocities.emplace_back(std::array<float, 3>{velX, velY, 0.0f});
@@ -546,9 +551,9 @@ void Renderer::CreateParticleVBO(int numParticleCount)
 		float particleCenterX = 0.f/*2.0f * (((float)rand() / (float) RAND_MAX) - 0.5f)*/;
 		float particleCenterY = 0.f/*2.0f * (((float)rand() / (float)RAND_MAX) - 0.5f)*/;
 
-		float fRandomR = 1.f * (((float)rand() / (float)RAND_MAX));
-		float fRandomG = 1.f * (((float)rand() / (float)RAND_MAX));
-		float fRandomB = 1.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomR = 50.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomG = 5.f * (((float)rand() / (float)RAND_MAX));
+		float fRandomB = 5.f * (((float)rand() / (float)RAND_MAX));
 		float fRandomA = 1.f * (((float)rand() / (float)RAND_MAX));
 
 		v_PosCol.emplace_back(particleCenterX - particleSize);
@@ -808,6 +813,24 @@ void Renderer::CreateVertexFlagVBO()
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 }
 
+void Renderer::CreateStudyVBO()
+{
+    float drawTriangle[] =
+    {
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, // x, y, z, tx, ty
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        -1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
+
+         -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, // x, y, z, tx, ty
+        1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
+    };
+
+    glGenBuffers(1, &m_StudyShaderVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_StudyShaderVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(drawTriangle), drawTriangle, GL_STATIC_DRAW);
+}
+
 void Renderer::CreateTextures()
 {
     static const GLulong checkerboard[] =
@@ -984,6 +1007,76 @@ void Renderer::CreateFBOs()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Renderer::PrepareBloom()
+{
+    m_GaussianBlurHShader = CompileShaders("./Shaders/GaussianBlur.vs", "./Shaders/GaussianBlurH.fs");
+    m_GaussianBlurVShader = CompileShaders("./Shaders/GaussianBlur.vs", "./Shaders/GaussianBlurV.fs");
+    m_DrawMergeTextureShader = CompileShaders("./Shaders/MergeTexture.vs", "./Shaders/MergeTexture.fs");
+
+    float sizeX = 1.f;
+    float sizeY = 1.f;
+
+    float fullRectTextureRect[] =
+    {
+        -sizeX, sizeY, 0.f,     0.f, 0.f,
+        -sizeX, -sizeY, 0.f,     0.f, 1.f,
+        sizeX, sizeY, 0.f,     1.f, 0.f,
+        sizeX, sizeY, 0.f,     1.f, 0.f,
+        -sizeX, -sizeY, 0.f,     0.f, 1.f,
+        sizeX, -sizeY, 0.f,     1.f, 1.f,
+    };
+
+    glGenBuffers(1, &m_FullRectVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, m_FullRectVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(fullRectTextureRect), fullRectTextureRect, GL_STATIC_DRAW);
+
+    glGenFramebuffers(1, &m_HDRFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_HDRFBO);
+
+    glGenTextures(1, &m_HDRHighTexture);
+    glBindTexture(GL_TEXTURE_2D, m_HDRHighTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_WindowSizeX, m_WindowSizeY, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glGenTextures(1, &m_HDRLowTexture);
+    glBindTexture(GL_TEXTURE_2D, m_HDRLowTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_WindowSizeX, m_WindowSizeY, 0, GL_RGBA, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_HDRLowTexture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_HDRHighTexture, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE)
+    {
+        std::cout << "fbo creation failed" << std::endl;
+    }
+
+    glGenFramebuffers(2, m_PingpongFBO);
+    glGenTextures(2, m_PingpongTexture);
+    for (int i = 0; i < 2; ++i)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, m_PingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, m_PingpongTexture[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_WindowSizeX, m_WindowSizeY, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_PingpongTexture[i], 0);
+        status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cout << "fbo creation failed" << std::endl;
+        }
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void Renderer::DrawTexture(float x, float y, float scaleX, float scaleY, GLuint texID)
 {
     GLuint shader = m_DrawTextureShader;
@@ -1079,12 +1172,12 @@ void Renderer::DrawHorizontalLine()
 
 void Renderer::DrawTextureSandBox()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO);
+    /*glBindFramebuffer(GL_FRAMEBUFFER, m_D_FBO);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glViewport(0, 0, FRAME_BUFFER_WIDTH, FRAME_BUFFER_HEIGHT);
 
     GLenum drawBuffers = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, &drawBuffers);
+    glDrawBuffers(1, &drawBuffers);*/
 
     GLuint program = m_TextureSandboxShader;
     glUseProgram(program);
@@ -1105,7 +1198,7 @@ void Renderer::DrawTextureSandBox()
     glVertexAttribPointer(TexLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_0Texture);
+    glBindTexture(GL_TEXTURE_2D, m_RGBTexture);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_1Texture);
@@ -1133,8 +1226,8 @@ void Renderer::DrawTextureSandBox()
     glUniform1iv(multisamplerULoc, 2, texID);
 
     GLuint samplerULoc = glGetUniformLocation(program, "uTexSampler");
-    //glUniform1i(samplerULoc, (int)(g_time) % 6);
-    glUniform1i(samplerULoc, 7);
+    glUniform1i(samplerULoc, (int)(g_time) % 6);
+    glUniform1i(samplerULoc, 0);
 
     GLuint stepLoc = glGetUniformLocation(program, "u_Step");
     glUniform1f(stepLoc, (int)g_time % 6);
@@ -1180,4 +1273,104 @@ void Renderer::DrawVertexFlag()
     glDrawArrays(GL_TRIANGLES, 0, gDummyVertexCount);
 
     DrawTexture(-0.75f, -0.75f, 128.f, 128.f, m_FlagTexture);
+}
+
+void Renderer::DrawStudyShader()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    GLuint program = m_StudyShader;
+    glUseProgram(program);
+
+    int PosLoc = glGetAttribLocation(program, "a_Position");
+    glEnableVertexAttribArray(PosLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_StudyShaderVBO);
+    glVertexAttribPointer(PosLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+
+    int TexLoc = glGetAttribLocation(program, "a_UV");
+    glEnableVertexAttribArray(TexLoc);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_StudyShaderVBO);
+    glVertexAttribPointer(TexLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+
+    GLuint samplerULoc = glGetUniformLocation(program, "u_Texture");
+    glUniform1i(samplerULoc, 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_0Texture);
+
+    GLuint timeULoc = glGetUniformLocation(program, "u_Time");
+    glUniform1f(timeULoc, g_time);
+    g_time += 0.0016f;
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::DrawGaussianBlur(GLuint texID, GLuint targetFBOID, GLuint shader)
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, targetFBOID);
+    glUseProgram(shader);
+    int posLoc = glGetAttribLocation(shader, "a_Position");
+    glEnableVertexAttribArray(posLoc);
+    int texLoc = glGetAttribLocation(shader, "a_TexPos");
+    glEnableVertexAttribArray(texLoc);
+
+    glUniform1i(glGetUniformLocation(shader, "u_Texture"), 0);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texID);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_FullRectVBO);
+    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+    glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Renderer::DrawMergeBloomTexture(GLuint sceneTexID, GLuint bloomTexID, float exposure)
+{
+    GLuint shader = m_DrawMergeTextureShader;
+    glUseProgram(shader);
+
+    int posLoc = glGetAttribLocation(shader, "a_Position");
+    glEnableVertexAttribArray(posLoc);
+    int texLoc = glGetAttribLocation(shader, "a_TexPos");
+    glEnableVertexAttribArray(texLoc);
+
+    glUniform1i(glGetUniformLocation(shader, "u_TextureScene"), 0);
+    glUniform1i(glGetUniformLocation(shader, "u_TextureBloom"), 1);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sceneTexID);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, bloomTexID);
+    GLuint exposureLoc = glGetUniformLocation(shader, "u_Exposure");
+    glUniform1f(exposureLoc, exposure);
+
+    glBindBuffer(GL_ARRAY_BUFFER, m_FullRectVBO);
+    glVertexAttribPointer(posLoc, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+    glVertexAttribPointer(texLoc, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, (GLvoid*)(sizeof(float) * 3));
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+}
+
+void Renderer::DrawParticleWithBloom()
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, m_HDRFBO);
+    GLenum drawbuffers[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, drawbuffers);
+    glClear(GL_COLOR_BUFFER_BIT);
+    DrawParticle();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    DrawGaussianBlur(m_HDRLowTexture, m_PingpongFBO[0], m_GaussianBlurHShader);
+
+    for (int i = 0; i < 20; ++i)
+    {
+        DrawGaussianBlur(m_PingpongTexture[0], m_PingpongFBO[1], m_GaussianBlurVShader);
+        DrawGaussianBlur(m_PingpongTexture[1], m_PingpongFBO[0], m_GaussianBlurVShader);
+    }
+    DrawGaussianBlur(m_PingpongTexture[0], m_PingpongFBO[1], m_GaussianBlurVShader);
+
+    DrawTexture(-0.75f, -0.75f, 128, 128, m_PingpongTexture[1]);
+    DrawTexture(-0.25f, -0.75f, 128, 128, m_HDRHighTexture);
+
+    DrawMergeBloomTexture(m_HDRLowTexture, m_PingpongTexture[1], 1.f);
 }

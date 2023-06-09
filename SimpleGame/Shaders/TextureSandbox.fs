@@ -78,8 +78,8 @@ void P7()
     //float x_repeat = u_XYRepeat.x;
     //float y_repeat = u_XYRepeat.y;
 
-    float x = fract(v_TexPos.x + (1.0f - v_TexPos.y));
-    float y = fract(v_TexPos.x + v_TexPos.y);
+    float x = fract(v_TexPos.x - (1.0f - v_TexPos.y));
+    float y = fract(v_TexPos.x - v_TexPos.y);
 
     vec2 newTexPos = vec2(x, y);
     FragColor = texture(uTexSampler, newTexPos);
@@ -117,7 +117,7 @@ void main()
     //P4();
     //P5();
     //P6();
-    //P7();
+    P7();
     //MultiTexture();
-    SpriteAnim();
+    //SpriteAnim();
 }

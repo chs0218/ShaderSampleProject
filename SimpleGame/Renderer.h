@@ -26,6 +26,8 @@ public:
     void DrawHorizontalLine();
     void DrawTextureSandBox();
     void DrawVertexFlag();
+    void DrawStudyShader();
+    void DrawParticleWithBloom();
 
     void DrawResult();
 private:
@@ -41,9 +43,11 @@ private:
 	void CreateSandBoxVBO();
     void CreateHorizontalVBO(int iHorizontalVertexCount);
     void CreateVertexFlagVBO();
+    void CreateStudyVBO();
     void CreateTextures();
     GLuint CreatePngTexture(char* filePath, GLuint samplingMethod);
     void CreateFBOs();
+    void PrepareBloom();
 
 	GLuint m_ParticleShader = -1;
 	GLuint m_ParticleVBO = -1;
@@ -125,5 +129,22 @@ private:
     void DrawTexture(float x, float y, float scaleX, float scaleY, GLuint texID);
     GLuint m_DrawTextureVBO = 0;
     GLuint m_DrawTextureShader = 0;
+
+    //Bloom
+    GLuint m_HDRFBO = 0;
+    GLuint m_HDRLowTexture = 0;
+    GLuint m_HDRHighTexture = 0;
+    GLuint m_PingpongFBO[2] = { 0 , 0 };
+    GLuint m_PingpongTexture[2] = { 0 , 0 };
+    GLuint m_FullRectVBO = 0;
+    GLuint m_GaussianBlurHShader = 0;
+    GLuint m_GaussianBlurVShader = 0;
+    void DrawGaussianBlur(GLuint texID, GLuint targetFBOID, GLuint shader);
+    GLuint m_DrawMergeTextureShader = 0;
+    void DrawMergeBloomTexture(GLuint sceneTexID, GLuint bloomTexID, float exposure);
+
+    // For Study Value
+    GLuint m_StudyShader = 0;
+    GLuint m_StudyShaderVBO = 0;
 };
 
